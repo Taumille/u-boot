@@ -26,6 +26,7 @@ static void cv1800b_set_tap_delay(struct sdhci_host *host, u16 tap)
 
 static void cv1800b_sdhci_reset(struct sdhci_host *host, u8 mask)
 {
+	log_warning("%s\n",__func__);
 	sdhci_writeb(host, mask, SDHCI_SOFTWARE_RESET);
 	while (sdhci_readb(host, SDHCI_SOFTWARE_RESET) & mask)
 		udelay(10);
@@ -33,6 +34,7 @@ static void cv1800b_sdhci_reset(struct sdhci_host *host, u8 mask)
 
 static int cv1800b_execute_tuning(struct mmc *mmc, u8 opcode)
 {
+	log_warning("%s\n",__func__);
 	struct sdhci_host *host = dev_get_priv(mmc->dev);
 
 	u16 tap;
@@ -70,6 +72,7 @@ static int cv1800b_sdhci_bind(struct udevice *dev)
 {
 	struct cv1800b_sdhci_plat *plat = dev_get_plat(dev);
 
+	log_warning("%s\n",__func__);
 	return sdhci_bind(dev, &plat->mmc, &plat->cfg);
 }
 
@@ -80,6 +83,7 @@ static int cv1800b_sdhci_probe(struct udevice *dev)
 	struct sdhci_host *host = dev_get_priv(dev);
 	int ret;
 
+	log_warning("%s\n",__func__);
 	host->name = dev->name;
 	host->ioaddr = devfdt_get_addr_ptr(dev);
 
@@ -103,6 +107,7 @@ static int cv1800b_sdhci_probe(struct udevice *dev)
 
 static const struct udevice_id cv1800b_sdhci_match[] = {
 	{ .compatible = "sophgo,cv1800b-dwcmshc" },
+	{ .compatible = "sophgo,sg2002-dwcmshc" },
 	{ }
 };
 
