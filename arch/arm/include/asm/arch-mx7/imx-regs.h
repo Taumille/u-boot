@@ -127,10 +127,10 @@
 #define ECSPI4_BASE_ADDR                (AIPS2_OFF_BASE_ADDR+0x30000)
 #define FTM1_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x40000)
 #define FTM2_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x50000)
-#define PWM1_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x60000)
-#define PWM2_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x70000)
-#define PWM3_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x80000)
-#define PWM4_IPS_BASE_ADDR              (AIPS2_OFF_BASE_ADDR+0x90000)
+#define PWM1_BASE_ADDR                  (AIPS2_OFF_BASE_ADDR + 0x60000)
+#define PWM2_BASE_ADDR                  (AIPS2_OFF_BASE_ADDR + 0x70000)
+#define PWM3_BASE_ADDR                  (AIPS2_OFF_BASE_ADDR + 0x80000)
+#define PWM4_BASE_ADDR                  (AIPS2_OFF_BASE_ADDR + 0x90000)
 #define SYSCNT_RD_IPS_BASE_ADDR         (AIPS2_OFF_BASE_ADDR+0xA0000)
 #define SYSCNT_CMP_IPS_BASE_ADDR        (AIPS2_OFF_BASE_ADDR+0xB0000)
 #define SYSCNT_CTRL_IPS_BASE_ADDR       (AIPS2_OFF_BASE_ADDR+0xC0000)
@@ -968,6 +968,22 @@ struct aipstz_regs {
 	u32	opacr2;
 	u32	opacr3;
 	u32	opacr4;
+};
+
+#define PWMCR_DOZEEN       BIT(24)
+#define PWMCR_WAITEN       BIT(23)
+#define PWMCR_DBGEN        BIT(22)
+#define PWMCR_CLKSRC_IPG_HIGH  (BIT(17) | BIT(16))
+#define PWMCR_CLKSRC_IPG   BIT(16)
+#define PWMCR_EN           BIT(0)
+
+struct pwm_regs {
+	u32	cr;
+	u32	sr;
+	u32	ir;
+	u32	sar;
+	u32	pr;
+	u32	cnr;
 };
 
 struct wdog_regs {
