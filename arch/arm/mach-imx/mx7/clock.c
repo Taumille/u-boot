@@ -524,6 +524,35 @@ unsigned int mxc_get_clock(enum mxc_clock clk)
 	return 0;
 }
 
+#ifdef CONFIG_PWM_IMX
+/* pwm_num can be 0 - 3 */
+int enable_pwm_clk(unsigned char enable, unsigned int pwm_num)
+{
+	u32 target;
+
+	if (pwm_num >= 4)
+		return -EINVAL;
+
+	if (enable) {
+		clock_enable(CCGR_PWM1 + pwm_num, 0);
+
+		/* Set i2c root clock to PLL_SYS_MAIN_120M_CLK */
+
+		target = CLK_ROOT_ON |
+			 PWM1_CLK_ROOT_FROM_PLL_SYS_MAIN_120M_CLK |
+			 CLK_ROOT_PRE_DIV(CLK_ROOT_PRE_DIV1) |
+			 CLK_ROOT_POST_DIV(CLK_ROOT_POST_DIV2);
+		clock_set_target_val(PWM1_CLK_ROOT + pwm_num, target);
+
+		clock_enable(CCGR_PWM1 + pwm_num, 1);
+	} else {
+		clock_enable(CCGR_PWM1 + pwm_num, 0);
+	}
+
+	return 0;
+}
+#endif
+
 #ifdef CONFIG_SYS_I2C_MXC
 /* i2c_num can be 0 - 3 */
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num)

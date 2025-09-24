@@ -347,6 +347,9 @@ void clock_init(void);
 #ifdef CONFIG_SYS_I2C_MXC
 int enable_i2c_clk(unsigned char enable, unsigned i2c_num);
 #endif
+#ifdef CONFIG_PWM_IMX
+int enable_pwm_clk(unsigned char enable, unsigned int pwm_num);
+#endif
 #ifdef CONFIG_FEC_MXC
 int set_clk_enet(enum enet_freq type);
 #endif
