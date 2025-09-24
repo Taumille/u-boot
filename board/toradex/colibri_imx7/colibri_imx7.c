@@ -7,6 +7,8 @@
 #include <env.h>
 #include <init.h>
 #include <net.h>
+#include <fdt_simplefb.h>
+#include <video.h>
 #include <asm/arch/clock.h>
 #include <asm/arch/crm_regs.h>
 #include <asm/arch/imx-regs.h>
@@ -29,6 +31,7 @@
 #include <netdev.h>
 #include <power/pmic.h>
 #include <power/rn5t567_pmic.h>
+#include <pwm.h>
 #include <usb.h>
 #include <usb/ehci-ci.h>
 #include "../common/tdx-common.h"
@@ -110,11 +113,12 @@ static void setup_gpmi_nand(void)
 #endif
 
 #ifdef CONFIG_VIDEO
+
 static iomux_v3_cfg_t const backlight_pads[] = {
 	/* Backlight On */
 	MX7D_PAD_SD1_WP__GPIO5_IO1 | MUX_PAD_CTRL(NO_PAD_CTRL),
 	/* Backlight PWM<A> (multiplexed pin) */
-	MX7D_PAD_GPIO1_IO08__GPIO1_IO8   | MUX_PAD_CTRL(NO_PAD_CTRL),
+	MX7D_PAD_GPIO1_IO08__PWM1_OUT   | MUX_PAD_CTRL(NO_PAD_CTRL),
 	MX7D_PAD_ECSPI2_MOSI__GPIO4_IO21 | MUX_PAD_CTRL(NO_PAD_CTRL),
 };
 
@@ -123,6 +127,8 @@ static iomux_v3_cfg_t const backlight_pads[] = {
 
 static int setup_lcd(void)
 {
+	int ret = 0;
+
 	imx_iomux_v3_setup_multiple_pads(backlight_pads, ARRAY_SIZE(backlight_pads));
 
 	/* Set BL_ON */
@@ -130,10 +136,16 @@ static int setup_lcd(void)
 	gpio_direction_output(GPIO_BL_ON, 1);
 
 	/* Set PWM<A> to full brightness (assuming inversed polarity) */
-	gpio_request(GPIO_PWM_A, "PWM<A>");
-	gpio_direction_output(GPIO_PWM_A, 0);
-
-	return 0;
+	enable_pwm_clk(1, 0);
+	ret = pwm_init(0, 0, 0);
+	if (ret)
+		goto error;
+	ret = pwm_config(0, 0, 6666666);
+	if (ret)
+		goto error;
+	ret = pwm_enable(0);
+error:
+	return ret;
 }
 #endif
 
@@ -142,12 +154,11 @@ static int setup_lcd(void)
  */
 void board_preboot_os(void)
 {
-#ifdef CONFIG_VIDEO
+#if defined(CONFIG_VIDEO) && defined(CONFIG_VIDEO_REMOVE)
 	gpio_direction_output(GPIO_PWM_A, 1);
 	gpio_direction_output(GPIO_BL_ON, 0);
 #endif
 }
-
 static void setup_iomux_uart(void)
 {
 	imx_iomux_v3_setup_multiple_pads(uart1_pads, ARRAY_SIZE(uart1_pads));
@@ -276,7 +287,7 @@ void reset_cpu(void)
 int ft_board_setup(void *blob, struct bd_info *bd)
 {
 #if defined(CONFIG_IMX_BOOTAUX) && defined(CONFIG_ARCH_FIXUP_FDT_MEMORY)
-	int up;
+	int up, ret;
 
 	up = arch_auxiliary_core_check_up(0);
 	if (up) {
@@ -312,6 +323,17 @@ int ft_board_setup(void *blob, struct bd_info *bd)
 			fdt_status_disabled(blob, off);
 	}
 #endif
+
+	if (IS_ENABLED(CONFIG_FDT_SIMPLEFB))
+		ret = fdt_simplefb_enable_and_mem_rsv(blob);
+
+	/* If simplefb is not enabled and video is active, then at least reserve
+	 * the framebuffer region to preserve the splash screen while OS is booting
+	 */
+	if (IS_ENABLED(CONFIG_VIDEO) && IS_ENABLED(CONFIG_OF_LIBFDT)) {
+		if (ret && video_is_active())
+			return fdt_add_fb_mem_rsv(blob);
+	}
 
 	return ft_common_board_setup(blob, bd);
 }
