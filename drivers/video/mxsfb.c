@@ -375,9 +375,11 @@ static int mxs_video_bind(struct udevice *dev)
 
 static int mxs_video_remove(struct udevice *dev)
 {
-	struct video_uc_plat *plat = dev_get_uclass_plat(dev);
+	if (CONFIG_IS_ENABLED(VIDEO_REMOVE)) {
+		struct video_uc_plat *plat = dev_get_uclass_plat(dev);
 
-	mxs_remove_common(plat->base);
+		mxs_remove_common(plat->base);
+	}
 
 	return 0;
 }
